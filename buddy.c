@@ -53,7 +53,8 @@ typedef struct {
   struct list_head list;
   /* TODO: DECLARE NECESSARY MEMBER VARIABLES */
   uint8_t *location; // points to start byte in memory
-  size_t index; 
+  size_t index;
+  uint8_t order;
 } page_t;
 
 /**************************************************************************
@@ -88,6 +89,7 @@ void buddy_init()
     /* TODO: INITIALIZE PAGE STRUCTURES */
     g_pages[i].index    = i;
     g_pages[i].location = PAGE_TO_ADDR(i);
+    g_pages[i].order    = -1;
   }
 
   /* initialize freelist */
@@ -140,14 +142,17 @@ void *buddy_alloc(int size)
     temp = list_entry(&free_area[i], page_t, list);
     list_del(&temp->list); // free up the larger block - we're splitting it in two
     allocation = temp; // still uses the same first byte //ADDR_TO_PAGE(temp->location);
+    allocation->order = i;
     // using i - 1 because we're splitting an upper order to two lower orders
     buddy      = &g_pages[ADDR_TO_PAGE(BUDDY_ADDR(allocation->location, (i - 1)))];
+    buddy->order = i;
     list_add(&buddy->list, &free_area[ i - 1 ]);
   }
 
   if(allocation == NULL){ // never entered for loop, no extra memory manipulation necessary!
     allocation = list_entry(&free_area[desired_order], page_t, list);
     list_del(&allocation->list);
+    allocation->order = desired_order;
   }
 		       
   
@@ -166,6 +171,9 @@ void *buddy_alloc(int size)
 void buddy_free(void *addr)
 {
   /* TODO: IMPLEMENT THIS FUNCTION */
+  //  size_t i, buddy_index, page_index = ADDR_TO_PAGE(addr);
+  
+  
 }
 
 /**
