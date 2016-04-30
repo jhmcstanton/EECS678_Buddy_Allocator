@@ -52,8 +52,8 @@
 typedef struct {
   struct list_head list;
   /* TODO: DECLARE NECESSARY MEMBER VARIABLES */
-  //  uint8_t *location; // points to start byte in memory
-  
+  uint8_t *location; // points to start byte in memory
+  size_t index; 
 } page_t;
 
 /**************************************************************************
@@ -86,6 +86,8 @@ void buddy_init()
   int n_pages = (1<<MAX_ORDER) / PAGE_SIZE;
   for (i = 0; i < n_pages; i++) {
     /* TODO: INITIALIZE PAGE STRUCTURES */
+    g_pages[i].index    = i;
+    g_pages[i].location = PAGE_TO_ADDR(i);
   }
 
   /* initialize freelist */

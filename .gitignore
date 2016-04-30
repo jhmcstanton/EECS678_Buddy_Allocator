@@ -1,2 +1,5 @@
 *~
 /doc/*
+*.o
+buddy
+simulator
