@@ -115,8 +115,43 @@ void buddy_init()
  */
 void *buddy_alloc(int size)
 {
-  /* TODO: IMPLEMENT THIS FUNCTION */
-  return NULL;
+  // desired order is the ordered required to allocate
+  // upper_order is the next minimum size that must be broken down
+  int i, desired_order = -1, upper_order = -1;
+  page_t *allocation, *buddy, *temp;
+
+  // find both bounds on orders: target and current available space
+  for(i = MIN_ORDER; i <= MAX_ORDER; i++){
+    
+    if (desired_order < MIN_ORDER && size <= (1 << i)){
+      desired_order = i;
+    }
+
+    if(desired_order >= MIN_ORDER && !list_empty(&free_area[i])){
+      upper_order = i;
+      break; // found both orders, done here
+    }
+  }
+
+  // step down until upper_order is split up into the desired_order - only entered if
+  // upper_order != desired_order currently!
+  // check for off-by-1 error here, should this be > or >=?
+  for(i = upper_order; i > desired_order; i--){
+    temp = list_entry(&free_area[i], page_t, list);
+    list_del(&temp->list); // free up the larger block - we're splitting it in two
+    allocation = temp; // still uses the same first byte //ADDR_TO_PAGE(temp->location);
+    // using i - 1 because we're splitting an upper order to two lower orders
+    buddy      = &g_pages[ADDR_TO_PAGE(BUDDY_ADDR(allocation->location, (i - 1)))];
+    list_add(&buddy->list, &free_area[ i - 1 ]);
+  }
+
+  if(allocation == NULL){ // never entered for loop, no extra memory manipulation necessary!
+    allocation = list_entry(&free_area[desired_order], page_t, list);
+    list_del(&allocation->list);
+  }
+		       
+  
+  return allocation->location;
 }
 
 /**
