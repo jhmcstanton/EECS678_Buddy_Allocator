@@ -14,6 +14,7 @@
  **************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include "buddy.h"
 #include "list.h"
@@ -57,13 +58,14 @@ typedef struct {
  * Global Variables
  **************************************************************************/
 /* free lists*/
-struct list_head free_area[MAX_ORDER+1];
+struct list_head free_area[MAX_ORDER+1]; // lists of free space, actual indexes are [MIN_ORDER - 1, MAX_ORDER]
 
 /* memory area */
-char g_memory[1<<MAX_ORDER];
+uint8_t g_memory[1<<MAX_ORDER]; // memory in bytes, pointers should point to the first byte of allocated memory
 
 /* page structures */
-page_t g_pages[(1<<MAX_ORDER)/PAGE_SIZE];
+// actually allocated pages? this could be a way to build up large allocations from minimumly sized allocations?
+page_t g_pages[(1<<MAX_ORDER)/PAGE_SIZE]; 
 
 /**************************************************************************
  * Public Function Prototypes
