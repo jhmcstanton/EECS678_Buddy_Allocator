@@ -34,12 +34,12 @@
 
 /* find buddy address */
 #define BUDDY_ADDR(addr, o) (void *)((((unsigned long)addr - (unsigned long)g_memory) ^ (1<<o)) \
-									 + (unsigned long)g_memory)
+				     + (unsigned long)g_memory)
 
 #if USE_DEBUG == 1
-#  define PDEBUG(fmt, ...) \
-	fprintf(stderr, "%s(), %s:%d: " fmt,			\
-		__func__, __FILE__, __LINE__, ##__VA_ARGS__)
+#  define PDEBUG(fmt, ...)				\
+  fprintf(stderr, "%s(), %s:%d: " fmt,			\
+	  __func__, __FILE__, __LINE__, ##__VA_ARGS__)
 #  define IFDEBUG(x) x
 #else
 #  define PDEBUG(fmt, ...)
@@ -50,8 +50,10 @@
  * Public Types
  **************************************************************************/
 typedef struct {
-	struct list_head list;
-	/* TODO: DECLARE NECESSARY MEMBER VARIABLES */
+  struct list_head list;
+  /* TODO: DECLARE NECESSARY MEMBER VARIABLES */
+  //  uint8_t *location; // points to start byte in memory
+  
 } page_t;
 
 /**************************************************************************
@@ -80,19 +82,19 @@ page_t g_pages[(1<<MAX_ORDER)/PAGE_SIZE];
  */
 void buddy_init()
 {
-	int i;
-	int n_pages = (1<<MAX_ORDER) / PAGE_SIZE;
-	for (i = 0; i < n_pages; i++) {
-		/* TODO: INITIALIZE PAGE STRUCTURES */
-	}
+  int i;
+  int n_pages = (1<<MAX_ORDER) / PAGE_SIZE;
+  for (i = 0; i < n_pages; i++) {
+    /* TODO: INITIALIZE PAGE STRUCTURES */
+  }
 
-	/* initialize freelist */
-	for (i = MIN_ORDER; i <= MAX_ORDER; i++) {
-		INIT_LIST_HEAD(&free_area[i]);
-	}
+  /* initialize freelist */
+  for (i = MIN_ORDER; i <= MAX_ORDER; i++) {
+    INIT_LIST_HEAD(&free_area[i]);
+  }
 
-	/* add the entire memory as a freeblock */
-	list_add(&g_pages[0].list, &free_area[MAX_ORDER]);
+  /* add the entire memory as a freeblock */
+  list_add(&g_pages[0].list, &free_area[MAX_ORDER]);
 }
 
 /**
@@ -111,8 +113,8 @@ void buddy_init()
  */
 void *buddy_alloc(int size)
 {
-	/* TODO: IMPLEMENT THIS FUNCTION */
-	return NULL;
+  /* TODO: IMPLEMENT THIS FUNCTION */
+  return NULL;
 }
 
 /**
@@ -126,7 +128,7 @@ void *buddy_alloc(int size)
  */
 void buddy_free(void *addr)
 {
-	/* TODO: IMPLEMENT THIS FUNCTION */
+  /* TODO: IMPLEMENT THIS FUNCTION */
 }
 
 /**
@@ -136,14 +138,14 @@ void buddy_free(void *addr)
  */
 void buddy_dump()
 {
-	int o;
-	for (o = MIN_ORDER; o <= MAX_ORDER; o++) {
-		struct list_head *pos;
-		int cnt = 0;
-		list_for_each(pos, &free_area[o]) {
-			cnt++;
-		}
-		printf("%d:%dK ", cnt, (1<<o)/1024);
-	}
-	printf("\n");
+  int o;
+  for (o = MIN_ORDER; o <= MAX_ORDER; o++) {
+    struct list_head *pos;
+    int cnt = 0;
+    list_for_each(pos, &free_area[o]) {
+      cnt++;
+    }
+    printf("%d:%dK ", cnt, (1<<o)/1024);
+  }
+  printf("\n");
 }
