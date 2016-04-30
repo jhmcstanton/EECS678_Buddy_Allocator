@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "buddy.h"
 #include "list.h"
@@ -55,6 +56,7 @@ typedef struct {
   uint8_t *location; // points to start byte in memory
   size_t index;
   uint8_t order;
+  bool in_use;
 } page_t;
 
 /**************************************************************************
@@ -90,6 +92,7 @@ void buddy_init()
     g_pages[i].index    = i;
     g_pages[i].location = PAGE_TO_ADDR(i);
     g_pages[i].order    = -1;
+    g_pages[i].in_use   = false;
   }
 
   /* initialize freelist */
@@ -145,7 +148,7 @@ void *buddy_alloc(int size)
     allocation->order = i;
     // using i - 1 because we're splitting an upper order to two lower orders
     buddy      = &g_pages[ADDR_TO_PAGE(BUDDY_ADDR(allocation->location, (i - 1)))];
-    buddy->order = i;
+    buddy->order  = i;
     list_add(&buddy->list, &free_area[ i - 1 ]);
   }
 
@@ -154,7 +157,7 @@ void *buddy_alloc(int size)
     list_del(&allocation->list);
     allocation->order = desired_order;
   }
-		       
+  allocation->in_use = true;
   
   return allocation->location;
 }
@@ -171,8 +174,22 @@ void *buddy_alloc(int size)
 void buddy_free(void *addr)
 {
   /* TODO: IMPLEMENT THIS FUNCTION */
-  //  size_t i, buddy_index, page_index = ADDR_TO_PAGE(addr);
+  size_t i;
+  page_t buddy_page, cur_page = g_pages[ADDR_TO_PAGE(addr)];
   
+  for(i = cur_page.order; i <= MAX_ORDER; i++){
+    buddy_page = g_pages[ADDR_TO_PAGE(BUDDY_ADDR(addr, i))];
+
+    // found a free buddy, bump its order up
+    if(!buddy_page.in_use){
+      buddy_page.order  = i + 1;
+    } else {
+      // buddy isn't free, done deallocating buddies
+      cur_page.order  = i;
+      cur_page.in_use = false;
+      break;
+    }
+  } 
   
 }
 
