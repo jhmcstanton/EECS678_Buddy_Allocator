@@ -63,7 +63,7 @@ typedef struct {
  * Global Variables
  **************************************************************************/
 /* free lists*/
-struct list_head free_area[MAX_ORDER+1]; // lists of free space, actual indexes are [MIN_ORDER - 1, MAX_ORDER]
+struct list_head free_area[MAX_ORDER+1]; // lists of free space, actual indexes are [MIN_ORDER, MAX_ORDER]
 
 /* memory area */
 uint8_t g_memory[1<<MAX_ORDER]; // memory in bytes, pointers should point to the first byte of allocated memory
@@ -91,6 +91,7 @@ void buddy_init()
     /* TODO: INITIALIZE PAGE STRUCTURES */
     g_pages[i].index    = i;
     g_pages[i].location = PAGE_TO_ADDR(i);
+    printf("page[%d].location = %p\n", i, g_pages[i].location);
     g_pages[i].order    = -1;
     g_pages[i].in_use   = false;
   }
@@ -102,6 +103,7 @@ void buddy_init()
 
   /* add the entire memory as a freeblock */
   list_add(&g_pages[0].list, &free_area[MAX_ORDER]);
+  printf("leaving init\n");
 }
 
 /**
@@ -120,6 +122,7 @@ void buddy_init()
  */
 void *buddy_alloc(int size)
 {
+    printf("in alloc\n");
   // desired order is the ordered required to allocate
   // upper_order is the next minimum size that must be broken down
   int i, desired_order = -1, upper_order = -1;
@@ -129,10 +132,11 @@ void *buddy_alloc(int size)
   for(i = MIN_ORDER; i <= MAX_ORDER; i++){
     
     if (desired_order < MIN_ORDER && size <= (1 << i)){
-      desired_order = i;
+	desired_order = i;
     }
 
     if(desired_order >= MIN_ORDER && !list_empty(&free_area[i])){
+      printf("Found non empty list\n");
       upper_order = i;
       break; // found both orders, done here
     }
@@ -141,13 +145,27 @@ void *buddy_alloc(int size)
   // step down until upper_order is split up into the desired_order - only entered if
   // upper_order != desired_order currently!
   // check for off-by-1 error here, should this be > or >=?
+  printf("Upper order: %d, desired order: %d\n", upper_order, desired_order);
+  printf("Page(0): %p\n", PAGE_TO_ADDR(0));
+
+  temp = (page_t *) list_entry(&free_area[upper_order], page_t, list)->list.next;
+  printf("temp.location: %p, temp.list %p, temp.order: %d, page_to_addr(%d): %p\n",
+	 temp->location, &temp->list, temp->order, i, PAGE_TO_ADDR(i/MAX_ORDER));
+  list_del(&temp->list); // free up the larger block - we're splitting it in two
+  allocation = temp; // still uses the same first byte //ADDR_TO_PAGE(temp->location);
+  allocation->order = desired_order;
+  
   for(i = upper_order; i > desired_order; i--){
-    temp = list_entry(&free_area[i], page_t, list);
-    list_del(&temp->list); // free up the larger block - we're splitting it in two
-    allocation = temp; // still uses the same first byte //ADDR_TO_PAGE(temp->location);
-    allocation->order = i;
     // using i - 1 because we're splitting an upper order to two lower orders
+    printf("i: %d, i - 1 : %d, allocation_addr: %p, buddy_addr: %p, addr_to_page: %ld\n",
+	   i,
+	   i - 1,
+	   allocation->location,
+	   BUDDY_ADDR(allocation->location, (i - 1)),
+	   ADDR_TO_PAGE(BUDDY_ADDR(allocation->location, (i-1)))
+	   );
     buddy      = &g_pages[ADDR_TO_PAGE(BUDDY_ADDR(allocation->location, (i - 1)))];
+
     buddy->order  = i;
     list_add(&buddy->list, &free_area[ i - 1 ]);
   }
