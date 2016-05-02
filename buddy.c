@@ -177,7 +177,7 @@ void *buddy_alloc(int size)
     #endif
     buddy      = &g_pages[ADDR_TO_PAGE(BUDDY_ADDR(allocation->location, (i - 1)))];
 
-    buddy->order  = i;
+    buddy->order  = i - 1;
 
     list_add(&buddy->list, &free_area[ i - 1 ]);
   }
@@ -217,19 +217,22 @@ void buddy_free(void *addr)
   void *buddy_addr; 
   
   for(i = cur_page->order; i <= MAX_ORDER; i++){
+    buddy_addr = BUDDY_ADDR(addr, i);
+    buddy_page = &g_pages[ADDR_TO_PAGE(buddy_addr)]; 
     #if USE_DEBUG
       printf("Buddy addr: %p, buddy_page: %ld\n",
-	     BUDDY_ADDR(addr, i), ADDR_TO_PAGE(BUDDY_ADDR(addr, i)));
+	     buddy_addr, ADDR_TO_PAGE(buddy_addr));
+      printf("Curpage.order: %d, buddy.order: %d\n", cur_page->order, buddy_page->order);
     #endif
-    buddy_addr = BUDDY_ADDR(addr, i);
-    buddy_page = &g_pages[ADDR_TO_PAGE(buddy_addr)];
 
     // found a free buddy, bump its order up
-    if(i < MAX_ORDER && !buddy_page->in_use){
-      buddy_page->order  = i + 1;
-      list_del(&buddy_page->list);
+    if(i < MAX_ORDER && buddy_page->order == i && !buddy_page->in_use){
+      list_del_init(&buddy_page->list);
       if(buddy_addr < addr){
+	  buddy_page->order  = i + 1;
 	  addr = buddy_addr;
+      } else {
+	  buddy_page->order = -1;
       }
     } else {
       // buddy isn't free, done deallocating buddies

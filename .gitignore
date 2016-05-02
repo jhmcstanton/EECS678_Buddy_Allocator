@@ -3,3 +3,4 @@
 *.o
 buddy
 simulator
+*.fuse*
