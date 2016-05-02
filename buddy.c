@@ -122,7 +122,7 @@ void buddy_init()
  */
 void *buddy_alloc(int size)
 {
-    printf("in alloc\n");
+  printf("in alloc\n");
   // desired order is the ordered required to allocate
   // upper_order is the next minimum size that must be broken down
   int i, desired_order = -1, upper_order = -1;
@@ -167,6 +167,7 @@ void *buddy_alloc(int size)
     buddy      = &g_pages[ADDR_TO_PAGE(BUDDY_ADDR(allocation->location, (i - 1)))];
 
     buddy->order  = i;
+
     list_add(&buddy->list, &free_area[ i - 1 ]);
   }
 
@@ -176,7 +177,8 @@ void *buddy_alloc(int size)
     allocation->order = desired_order;
   }
   allocation->in_use = true;
-  
+
+  printf("Leaving alloc\n");
   return allocation->location;
 }
 
@@ -191,24 +193,28 @@ void *buddy_alloc(int size)
  */
 void buddy_free(void *addr)
 {
-  /* TODO: IMPLEMENT THIS FUNCTION */
+  printf("in buddy free\n");
   size_t i;
-  page_t buddy_page, cur_page = g_pages[ADDR_TO_PAGE(addr)];
+  printf("Page index: %ld\n", ADDR_TO_PAGE(addr));
+  page_t *buddy_page, *cur_page = &g_pages[ADDR_TO_PAGE(addr)];
   
-  for(i = cur_page.order; i <= MAX_ORDER; i++){
-    buddy_page = g_pages[ADDR_TO_PAGE(BUDDY_ADDR(addr, i))];
+  for(i = cur_page->order; i <= MAX_ORDER; i++){
+    buddy_page = &g_pages[ADDR_TO_PAGE(BUDDY_ADDR(addr, i))];
 
     // found a free buddy, bump its order up
-    if(!buddy_page.in_use){
-      buddy_page.order  = i + 1;
+    if(!buddy_page->in_use){
+      buddy_page->order  = i + 1;
+      list_del(&buddy_page->list);
     } else {
       // buddy isn't free, done deallocating buddies
-      cur_page.order  = i;
-      cur_page.in_use = false;
+      cur_page->order  = i;
+      cur_page->in_use = false;
       break;
     }
-  } 
-  
+  }
+  //list_add((struct list_head*)&cur_page, &free_area[i]);
+  list_add(&cur_page->list, &free_area[i]);
+  printf("leaving buddy free\n");
 }
 
 /**
