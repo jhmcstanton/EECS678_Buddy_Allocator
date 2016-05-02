@@ -1,0 +1,4 @@
+A = alloc(80K)
+free(A)
+B = alloc(300K)
+free(B)
