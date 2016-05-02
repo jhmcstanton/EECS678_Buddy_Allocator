@@ -7,7 +7,7 @@
 /**************************************************************************
  * Conditional Compilation Options
  **************************************************************************/
-#define USE_DEBUG 1
+#define USE_DEBUG 0
 
 /**************************************************************************
  * Included Files
@@ -142,7 +142,9 @@ void *buddy_alloc(int size)
     }
 
     if(desired_order >= MIN_ORDER && !list_empty(&free_area[i])){
+      #if USE_DEBUG
       printf("Found non empty list\n");
+      #endif
       upper_order = i;
       break; // found both orders, done here
     }
@@ -217,7 +219,7 @@ void buddy_free(void *addr)
     buddy_page = &g_pages[ADDR_TO_PAGE(BUDDY_ADDR(addr, i))];
 
     // found a free buddy, bump its order up
-    if(!buddy_page->in_use){
+    if(i < MAX_ORDER && !buddy_page->in_use){
       buddy_page->order  = i + 1;
       list_del(&buddy_page->list);
     } else {

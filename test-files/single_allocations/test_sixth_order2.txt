@@ -1,0 +1,2 @@
+A = alloc(128K)
+free(A)

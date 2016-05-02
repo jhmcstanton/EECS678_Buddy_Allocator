@@ -1,0 +1,2 @@
+A = alloc(30K)
+free(A)
