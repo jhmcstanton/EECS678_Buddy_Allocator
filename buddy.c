@@ -7,7 +7,7 @@
 /**************************************************************************
  * Conditional Compilation Options
  **************************************************************************/
-#define USE_DEBUG 0
+#define USE_DEBUG 1
 
 /**************************************************************************
  * Included Files
@@ -91,7 +91,9 @@ void buddy_init()
     /* TODO: INITIALIZE PAGE STRUCTURES */
     g_pages[i].index    = i;
     g_pages[i].location = PAGE_TO_ADDR(i);
+    #if USE_DEBUG
     printf("page[%d].location = %p\n", i, g_pages[i].location);
+    #endif
     g_pages[i].order    = -1;
     g_pages[i].in_use   = false;
   }
@@ -103,7 +105,9 @@ void buddy_init()
 
   /* add the entire memory as a freeblock */
   list_add(&g_pages[0].list, &free_area[MAX_ORDER]);
+  #if USE_DEBUG
   printf("leaving init\n");
+  #endif
 }
 
 /**
@@ -122,7 +126,9 @@ void buddy_init()
  */
 void *buddy_alloc(int size)
 {
+  #if USE_DEBUG
   printf("in alloc\n");
+  #endif
   // desired order is the ordered required to allocate
   // upper_order is the next minimum size that must be broken down
   int i, desired_order = -1, upper_order = -1;
@@ -145,18 +151,20 @@ void *buddy_alloc(int size)
   // step down until upper_order is split up into the desired_order - only entered if
   // upper_order != desired_order currently!
   // check for off-by-1 error here, should this be > or >=?
+  temp = (page_t *) list_entry(&free_area[upper_order], page_t, list)->list.next;
+  #if USE_DEBUG
   printf("Upper order: %d, desired order: %d\n", upper_order, desired_order);
   printf("Page(0): %p\n", PAGE_TO_ADDR(0));
-
-  temp = (page_t *) list_entry(&free_area[upper_order], page_t, list)->list.next;
   printf("temp.location: %p, temp.list %p, temp.order: %d, page_to_addr(%d): %p\n",
 	 temp->location, &temp->list, temp->order, i, PAGE_TO_ADDR(i/MAX_ORDER));
+  #endif 
   list_del(&temp->list); // free up the larger block - we're splitting it in two
   allocation = temp; // still uses the same first byte //ADDR_TO_PAGE(temp->location);
   allocation->order = desired_order;
   
   for(i = upper_order; i > desired_order; i--){
     // using i - 1 because we're splitting an upper order to two lower orders
+    #if USE_DEBUG
     printf("i: %d, i - 1 : %d, allocation_addr: %p, buddy_addr: %p, addr_to_page: %ld\n",
 	   i,
 	   i - 1,
@@ -164,6 +172,7 @@ void *buddy_alloc(int size)
 	   BUDDY_ADDR(allocation->location, (i - 1)),
 	   ADDR_TO_PAGE(BUDDY_ADDR(allocation->location, (i-1)))
 	   );
+    #endif
     buddy      = &g_pages[ADDR_TO_PAGE(BUDDY_ADDR(allocation->location, (i - 1)))];
 
     buddy->order  = i;
@@ -178,7 +187,9 @@ void *buddy_alloc(int size)
   }
   allocation->in_use = true;
 
+  #if USE_DEBUG
   printf("Leaving alloc\n");
+  #endif 
   return allocation->location;
 }
 
@@ -193,9 +204,13 @@ void *buddy_alloc(int size)
  */
 void buddy_free(void *addr)
 {
+  #if USE_DEBUG
   printf("in buddy free\n");
+  #endif
   size_t i;
+  #if USE_DEBUG
   printf("Page index: %ld\n", ADDR_TO_PAGE(addr));
+  #endif
   page_t *buddy_page, *cur_page = &g_pages[ADDR_TO_PAGE(addr)];
   
   for(i = cur_page->order; i <= MAX_ORDER; i++){
@@ -214,7 +229,9 @@ void buddy_free(void *addr)
   }
   //list_add((struct list_head*)&cur_page, &free_area[i]);
   list_add(&cur_page->list, &free_area[i]);
+  #if USE_DEBUG
   printf("leaving buddy free\n");
+  #endif
 }
 
 /**
