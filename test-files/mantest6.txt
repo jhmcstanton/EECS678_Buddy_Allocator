@@ -1,0 +1,3 @@
+a = alloc(420K)
+free(b)
+free(a)
