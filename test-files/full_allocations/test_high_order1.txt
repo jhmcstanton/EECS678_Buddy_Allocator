@@ -1,0 +1,2 @@
+A = alloc(1000K)
+B = alloc(1000K)
