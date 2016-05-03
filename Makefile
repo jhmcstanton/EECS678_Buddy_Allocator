@@ -1,4 +1,4 @@
-STUDENT_LASTNAMES = XXXXXXX
+STUDENT_LASTNAMES = Stanton_Koehn
 PROGNAME = buddy
 
 CC = gcc -std=gnu11

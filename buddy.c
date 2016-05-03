@@ -227,10 +227,11 @@ void buddy_free(void *addr)
 
     // found a free buddy, bump its order up
     if(i < MAX_ORDER && buddy_page->order == i && !buddy_page->in_use){
-      list_del_init(&buddy_page->list);
+	list_del_init(&buddy_page->list);
       if(buddy_addr < addr){
 	  buddy_page->order  = i + 1;
 	  cur_page->order    = -1;
+	  cur_page = buddy_page;
 	  addr = buddy_addr;
       } else {
 	  buddy_page->order = -1;
