@@ -150,17 +150,22 @@ void *buddy_alloc(int size)
     }
   }
 
+  // not enough memory available
+  if(i > MAX_ORDER){
+      return NULL;
+  }
+
   // step down until upper_order is split up into the desired_order - only entered if
   // upper_order != desired_order currently!
   // check for off-by-1 error here, should this be > or >=?
-  temp = (page_t *) list_entry(&free_area[upper_order], page_t, list)->list.next;
+  temp = list_entry(free_area[upper_order].next, page_t, list);
   #if USE_DEBUG
   printf("Upper order: %d, desired order: %d\n", upper_order, desired_order);
   printf("Page(0): %p\n", PAGE_TO_ADDR(0));
   printf("temp.location: %p, temp.list %p, temp.order: %d, page_to_addr(%d): %p\n",
 	 temp->location, &temp->list, temp->order, i, PAGE_TO_ADDR(i/MAX_ORDER));
   #endif 
-  list_del(&temp->list); // free up the larger block - we're splitting it in two
+  list_del_init(&temp->list); // free up the larger block - we're splitting it in two
   allocation = temp; // still uses the same first byte //ADDR_TO_PAGE(temp->location);
   allocation->order = desired_order;
   
@@ -182,11 +187,6 @@ void *buddy_alloc(int size)
     list_add(&buddy->list, &free_area[ i - 1 ]);
   }
 
-/*  if(desired_order == upper_order){ // never entered for loop, no extra memory manipulation necessary!
-    allocation = list_entry(&free_area[desired_order], page_t, list);
-    list_del(&allocation->list);
-    allocation->order = desired_order;
-    }*/
   allocation->in_use = true;
 
   #if USE_DEBUG
@@ -230,6 +230,7 @@ void buddy_free(void *addr)
       list_del_init(&buddy_page->list);
       if(buddy_addr < addr){
 	  buddy_page->order  = i + 1;
+	  cur_page->order    = -1;
 	  addr = buddy_addr;
       } else {
 	  buddy_page->order = -1;
