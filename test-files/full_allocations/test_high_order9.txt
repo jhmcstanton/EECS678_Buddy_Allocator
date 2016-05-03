@@ -1,0 +1,6 @@
+A = alloc(200K)
+B = alloc(100K)
+C = alloc(100K)
+free(B)
+free(C)
+free(A)
